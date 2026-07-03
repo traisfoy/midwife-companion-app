@@ -1,0 +1,15 @@
+{
+  "name": "midwife-companion-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Companion tool for home birth and birth center midwives: patient labor logging + live midwife dashboard with 5-1-1 alerting and ETA.",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "db:setup": "npm run db:setup --prefix server",
+    "seed": "npm run seed --prefix server",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
