@@ -1,83 +1,88 @@
-# Midwife Companion
+# ProteIn
 
-A two-sided companion tool for home birth and birth center midwives — **not** a full EHR.
+A protein tracker whose entire experience lives on a medium home screen widget.
+The app itself is a single screen for setting your daily goal (default **165g**);
+everything else — logging, progress, undo — happens on the widget.
 
-- **Patient app**: one-tap contraction timer, water/food/medication logging, recurring
-  medication reminders, and push nudges when water or food hasn't been logged recently.
-- **Midwife dashboard**: live caseload (alerting patients pinned first), per-patient
-  contraction pattern graph + intake history + medication adherence, alert panel with
-  drive-time ETA and one-tap acknowledge, and per-patient alert threshold configuration.
-- **Alert engine**: every new contraction log is evaluated against the patient's
-  configured threshold (default **5-1-1**: contractions ≤ 5 min apart, ≥ 1 min long,
-  sustained for 1 hour). When crossed, the assigned midwife gets a push notification and
-  a live dashboard alert with the estimated drive time to the patient's address.
+- Swift + SwiftUI + WidgetKit, iOS 17+
+- No third-party dependencies, no backend, no account, no ads, no tracking
+- All data lives in App Group `UserDefaults` shared between app and widget
 
-> ⚠️ **Prototype only.** Production deployment requires a HIPAA risk assessment and
-> signed BAAs with every third-party service before real patient data touches this
-> system. See the note at the top of `server/src/index.js`.
-
-## Stack
-
-React (Vite) · Node.js/Express · PostgreSQL · Socket.IO (realtime) · Web Push ·
-OpenRouteService (optional, for real driving ETAs and geocoding).
+## Project layout
 
 ```
-/client   React app — patient + midwife views with role-based routing
-/server   Express API, alert engine, reminder jobs, Socket.IO
+.
+├── ProteIn.xcodeproj
+├── ProteIn/                  # App target (onboarding / goal settings screen)
+│   ├── ProteInApp.swift
+│   ├── GoalView.swift
+│   ├── Assets.xcassets
+│   └── ProteIn.entitlements
+├── ProteInWidget/            # Widget extension target (the core product)
+│   ├── ProteInWidgetBundle.swift
+│   ├── ProteInWidget.swift
+│   ├── Info.plist
+│   └── ProteInWidget.entitlements
+└── Shared/                   # Compiled into BOTH targets
+    ├── ProteinStore.swift    # App Group UserDefaults store + midnight reset
+    └── ProteinIntents.swift  # AppIntents driving the widget buttons
 ```
 
-## Quick start
+## Setup (one-time, in Xcode)
 
-Requires Node 20+ and a local PostgreSQL server.
+1. Open `ProteIn.xcodeproj` in Xcode 15 or newer.
+2. Select the **ProteIn** target → Signing & Capabilities → choose your team.
+   Do the same for the **ProteInWidget** target.
+3. **App Group** (required — this is the bridge between the widget and the app):
+   both targets ship with the App Group `group.com.protein.tracker` already in
+   their entitlements. Register that group ID on your developer account (Xcode
+   usually offers to do this automatically under Signing & Capabilities → App
+   Groups). If you use your own group ID instead, change it in exactly three
+   places so they stay in sync:
+   - `Shared/ProteinStore.swift` → `ProteinStore.appGroupID`
+   - `ProteIn/ProteIn.entitlements`
+   - `ProteInWidget/ProteInWidget.entitlements`
 
-```bash
-npm run install:all   # installs root, server, and client deps
-npm run db:setup      # creates the midwife_app role + midwife_companion db, applies schema
-npm run seed          # 1 midwife + 3 patients with sample data
-npm run dev           # starts API (:4000) and client (:5173) together
-```
+   If the group IDs don't match, taps on the widget will write to a different
+   defaults suite than the app reads, and nothing will appear to update.
+4. You may also want to change the bundle identifiers (`com.protein.tracker`
+   and `com.protein.tracker.widget`) to match your team's namespace. The widget
+   bundle ID must remain prefixed by the app's bundle ID.
+5. Build & run on an iOS 17+ device or simulator, then long-press the home
+   screen → add the **ProteIn** medium widget.
 
-Open http://localhost:5173.
+## Behavior
 
-| Role | Email | Password |
-|---|---|---|
-| Midwife | `sarah@peacefulbeginnings.test` | `midwife123` |
-| Patient | `maria@example.test` | `patient123` |
-| Patient | `jasmine@example.test` | `patient123` |
-| Patient | `emily@example.test` | `patient123` |
+- **+1 / +5 / +10 buttons** log grams instantly via iOS 17 interactive widget
+  buttons (`Button(intent:)` + `AppIntent`). The intent runs in the widget
+  process, writes to the shared store, and the widget re-renders immediately.
+- **Undo button** removes the most recent entry and shows what it will remove
+  (e.g. "Undo 10g").
+- **Ring** fills proportionally toward the goal and shifts hue from blue toward
+  yellow as you get close, then snaps to green at 100%, when the remaining
+  label also flips to **GOAL HIT**.
+- **Midnight reset** is automatic and timer-free: entries are stored under a
+  per-day stamp, so any read on a new day sees 0. The widget timeline also
+  schedules a refresh just after midnight so the displayed number resets even
+  if you never tap it.
 
-`npm run dev` also works from inside `/client` and `/server` individually.
+## Design note: press-and-hold to subtract
 
-### Trying the full alert flow
+The original spec called for press-and-hold on the +N buttons to subtract.
+WidgetKit does not support this: interactive widgets only accept
+`Button(intent:)` / `Toggle(intent:)` taps, and the system reserves long-press
+on a widget for the edit/remove context menu — there is no long-press gesture
+API inside a widget, on any iOS version. Per the fallback in the spec, the
+widget instead ships a dedicated **undo** button that removes the last logged
+entry. Because logging happens in 1/5/10g taps, undo gives the same corrective
+power (hold-to-remove-N is equivalent to undoing the tap that added N).
 
-1. Sign in as the midwife in one browser window (keep the dashboard open; optionally
-   click **Enable push alerts** and **Update my location**).
-2. Sign in as `maria@example.test` in a second window (or private window).
-3. Log contractions with the timer. The pattern must be *sustained*, so for a quick
-   demo either lower Maria's **pattern window** threshold on her detail page (e.g. to
-   10 minutes, with 3+ contractions ~4 min apart lasting >60s), or backfill via the API.
-4. The alert appears on the open dashboard in real time (Socket.IO, with a 30s polling
-   backstop) with the calculated ETA; acknowledge it with one tap.
+## App Store notes
 
-### Configuration (`server/.env`, optional)
-
-Copy `server/.env.example`. Everything has working local defaults. Set `ORS_API_KEY`
-(free at openrouteservice.org) to get real driving ETAs and address geocoding —
-without it the app falls back to a straight-line-distance estimate. VAPID keys for Web
-Push are auto-generated on first boot and persisted to `server/.vapid.json`.
-
-## How the alert engine works
-
-`server/src/services/alertEngine.js` runs on every new contraction log:
-
-1. Pulls the patient's contraction logs over their pattern window (default 60 min).
-2. Computes average frequency (gap between contraction starts) and average duration.
-3. Compares against the patient's per-patient thresholds.
-4. If crossed — and no unacknowledged alert already exists for the patient — creates an
-   Alert, computes the drive-time ETA from the midwife's last known location to the
-   patient's address, sends the midwife a Web Push notification, and emits a realtime
-   `alert:new` event to her dashboard.
-
-Reminder jobs (`server/src/services/reminders.js`, 60s tick) send water/food nudges
-when nothing has been logged within the midwife-configured window (default 4 hours,
-re-nudged at most once per window) and fire recurring medication reminders.
+- Priced as a **paid app at $0.99** (one-time). Pricing is configured in App
+  Store Connect (Pricing and Availability → $0.99 tier); no StoreKit code is
+  needed because there are no in-app purchases or subscriptions.
+- No data collection of any kind — the privacy "nutrition label" in App Store
+  Connect can declare "Data Not Collected". There is no network code in the app.
+- Before submitting, add a 1024×1024 app icon to
+  `ProteIn/Assets.xcassets/AppIcon.appiconset` (the set is present but empty).

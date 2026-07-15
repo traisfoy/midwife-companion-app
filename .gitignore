@@ -1,11 +1,7 @@
-node_modules/
-dist/
-.env
-.vapid.json
-*.log
 .DS_Store
 
 # Xcode
 xcuserdata/
 *.xcuserstate
 DerivedData/
+build/
