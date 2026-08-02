@@ -67,7 +67,7 @@ struct ProteInWidget: Widget {
                     )
                 }
         }
-        .configurationDisplayName("ProteIn")
+        .configurationDisplayName("JstMacros")
         .description("Track today's protein and log grams with one tap.")
         .supportedFamilies([.systemMedium])
     }

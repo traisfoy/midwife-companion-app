@@ -7,7 +7,7 @@ import Foundation
 /// (ProteIn/ProteIn.entitlements and ProteInWidget/ProteInWidget.entitlements)
 /// and must be registered on your Apple Developer account.
 enum ProteinStore {
-    static let appGroupID = "group.com.protein.tracker"
+    static let appGroupID = "group.com.mactrak.tracker"
 
     static let goalKey = "dailyGoal"
     static let entriesKey = "todayEntries"

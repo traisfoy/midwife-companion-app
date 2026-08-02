@@ -36,7 +36,7 @@ struct GoalView: View {
                 Spacer()
 
                 VStack(spacing: 8) {
-                    Text("ProteIn")
+                    Text("JstMacros")
                         .font(.system(size: 40, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white)
                     Text(hasOnboarded ? "Edit your daily protein goal" : "Set your daily protein goal")
@@ -85,7 +85,7 @@ struct GoalView: View {
                     Text("Today: \(ProteinStore.todayTotal)g logged")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.45))
-                    Text("Add the ProteIn widget to your Home Screen —\nthat's where the tracking happens.")
+                    Text("Add the JstMacros widget to your Home Screen —\nthat's where the tracking happens.")
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.3))
                         .multilineTextAlignment(.center)
