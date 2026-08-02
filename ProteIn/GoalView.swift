@@ -35,7 +35,33 @@ struct GoalView: View {
             VStack(spacing: 28) {
                 Spacer()
 
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .stroke(.white.opacity(0.08), lineWidth: 4)
+                            .frame(width: 72, height: 72)
+                        Circle()
+                            .trim(from: 0, to: 0.75)
+                            .stroke(
+                                AngularGradient(
+                                    colors: [
+                                        Color(hue: 0.58, saturation: 0.85, brightness: 0.95),
+                                        Color(hue: 0.13, saturation: 0.85, brightness: 0.95),
+                                        Color(red: 0.20, green: 0.85, blue: 0.45)
+                                    ],
+                                    center: .center,
+                                    startAngle: .degrees(-90),
+                                    endAngle: .degrees(180)
+                                ),
+                                style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                            )
+                            .frame(width: 72, height: 72)
+                            .rotationEffect(.degrees(-90))
+                        Text("M")
+                            .font(.system(size: 30, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                    }
+
                     Text("JstMacros")
                         .font(.system(size: 40, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white)
