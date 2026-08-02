@@ -1,11 +1,9 @@
 import AppIntents
 import WidgetKit
 
-/// Adds a fixed amount of protein to today's total. Driven by the +1/+5/+10
-/// buttons on the widget (iOS 17 interactive widgets).
-struct LogProteinIntent: AppIntent {
-    static var title: LocalizedStringResource = "Log Protein"
-    static var description = IntentDescription("Adds grams of protein to today's total.")
+struct LogMacroIntent: AppIntent {
+    static var title: LocalizedStringResource = "Log Macro"
+    static var description = IntentDescription("Adds grams to today's total for the currently selected macro.")
 
     @Parameter(title: "Grams")
     var amount: Int
@@ -17,24 +15,38 @@ struct LogProteinIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        ProteinStore.log(amount)
+        MacroStore.log(amount, for: MacroStore.selectedMacro)
         WidgetCenter.shared.reloadAllTimelines()
         return .result()
     }
 }
 
-/// Removes the most recent logged entry. WidgetKit reserves press-and-hold on
-/// widgets for the system edit menu, so subtraction is exposed through this
-/// dedicated undo button instead of long-pressing the +N buttons.
-struct UndoProteinIntent: AppIntent {
-    static var title: LocalizedStringResource = "Undo Last Protein Entry"
-    static var description = IntentDescription("Removes the most recent protein entry from today's total.")
+struct UndoMacroIntent: AppIntent {
+    static var title: LocalizedStringResource = "Undo Last Macro Entry"
+    static var description = IntentDescription("Removes the most recent entry for the currently selected macro.")
 
     init() {}
 
     func perform() async throws -> some IntentResult {
-        ProteinStore.undoLastEntry()
+        MacroStore.undoLastEntry(for: MacroStore.selectedMacro)
         WidgetCenter.shared.reloadAllTimelines()
         return .result()
     }
 }
+
+struct SwitchMacroIntent: AppIntent {
+    static var title: LocalizedStringResource = "Switch Macro"
+    static var description = IntentDescription("Cycles the widget between protein, carbs, and fat.")
+
+    init() {}
+
+    func perform() async throws -> some IntentResult {
+        MacroStore.selectedMacro = MacroStore.selectedMacro.next
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
+}
+
+// Keep old names so existing widget installs don't break
+typealias LogProteinIntent = LogMacroIntent
+typealias UndoProteinIntent = UndoMacroIntent

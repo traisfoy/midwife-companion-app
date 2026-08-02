@@ -4,11 +4,18 @@ import WidgetKit
 
 // MARK: - Timeline
 
-struct ProteinEntry: TimelineEntry {
+struct MacroEntry: TimelineEntry {
     let date: Date
+    let macro: Macro
     let total: Int
     let goal: Int
     let lastEntry: Int?
+    let proteinTotal: Int
+    let carbsTotal: Int
+    let fatTotal: Int
+    let proteinGoal: Int
+    let carbsGoal: Int
+    let fatGoal: Int
 
     var progress: Double {
         guard goal > 0 else { return 0 }
@@ -20,33 +27,46 @@ struct ProteinEntry: TimelineEntry {
     }
 }
 
-struct ProteinProvider: TimelineProvider {
-    func placeholder(in context: Context) -> ProteinEntry {
-        ProteinEntry(date: .now, total: 94, goal: 165, lastEntry: 10)
+struct MacroProvider: TimelineProvider {
+    func placeholder(in context: Context) -> MacroEntry {
+        MacroEntry(
+            date: .now, macro: .protein, total: 94, goal: 165, lastEntry: 10,
+            proteinTotal: 94, carbsTotal: 120, fatTotal: 30,
+            proteinGoal: 165, carbsGoal: 250, fatGoal: 65
+        )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (ProteinEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping (MacroEntry) -> Void) {
         completion(context.isPreview ? placeholder(in: context) : currentEntry())
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<ProteinEntry>) -> Void) {
-        // One entry reflecting current state; interactive buttons trigger an
-        // immediate reload. Refresh after midnight so the total visibly
-        // resets to 0 for the new day.
+    func getTimeline(in context: Context, completion: @escaping (Timeline<MacroEntry>) -> Void) {
         let startOfToday = Calendar.current.startOfDay(for: .now)
         let nextMidnight = Calendar.current.date(byAdding: .day, value: 1, to: startOfToday) ?? .now.addingTimeInterval(86_400)
         completion(Timeline(entries: [currentEntry()], policy: .after(nextMidnight)))
     }
 
-    private func currentEntry() -> ProteinEntry {
-        ProteinEntry(
+    private func currentEntry() -> MacroEntry {
+        let selected = MacroStore.selectedMacro
+        return MacroEntry(
             date: .now,
-            total: ProteinStore.todayTotal,
-            goal: ProteinStore.goal,
-            lastEntry: ProteinStore.lastEntry
+            macro: selected,
+            total: MacroStore.todayTotal(for: selected),
+            goal: MacroStore.goal(for: selected),
+            lastEntry: MacroStore.lastEntry(for: selected),
+            proteinTotal: MacroStore.todayTotal(for: .protein),
+            carbsTotal: MacroStore.todayTotal(for: .carbs),
+            fatTotal: MacroStore.todayTotal(for: .fat),
+            proteinGoal: MacroStore.goal(for: .protein),
+            carbsGoal: MacroStore.goal(for: .carbs),
+            fatGoal: MacroStore.goal(for: .fat)
         )
     }
 }
+
+// Keep old type name for the widget bundle
+typealias ProteinEntry = MacroEntry
+typealias ProteinProvider = MacroProvider
 
 // MARK: - Widget
 
@@ -54,8 +74,8 @@ struct ProteInWidget: Widget {
     let kind = "ProteInWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: ProteinProvider()) { entry in
-            ProteInWidgetView(entry: entry)
+        StaticConfiguration(kind: kind, provider: MacroProvider()) { entry in
+            MacroWidgetView(entry: entry)
                 .containerBackground(for: .widget) {
                     LinearGradient(
                         colors: [
@@ -68,26 +88,18 @@ struct ProteInWidget: Widget {
                 }
         }
         .configurationDisplayName("JstMacros")
-        .description("Track today's protein and log grams with one tap.")
+        .description("Track protein, carbs, and fat with one tap.")
         .supportedFamilies([.systemMedium])
     }
 }
 
 // MARK: - View
 
-struct ProteInWidgetView: View {
-    let entry: ProteinEntry
+struct MacroWidgetView: View {
+    let entry: MacroEntry
 
     private var ringColor: Color {
-        Self.ringColor(for: entry.progress)
-    }
-
-    /// Blue at 0%, blending toward yellow as the goal approaches, green at 100%.
-    static func ringColor(for progress: Double) -> Color {
-        if progress >= 1 { return Color(red: 0.20, green: 0.85, blue: 0.45) }
-        let t = min(max(progress, 0), 1)
-        // Hue slides from blue (0.58) to yellow (0.13).
-        return Color(hue: 0.58 - 0.45 * t, saturation: 0.85, brightness: 0.95)
+        entry.macro.progressColor(for: entry.progress)
     }
 
     var body: some View {
@@ -98,43 +110,86 @@ struct ProteInWidgetView: View {
     }
 
     private var progressSection: some View {
-        VStack(spacing: 5) {
-            ZStack {
-                Circle()
-                    .stroke(.white.opacity(0.10), lineWidth: 5)
-                Circle()
-                    .trim(from: 0, to: min(entry.progress, 1))
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+        VStack(spacing: 4) {
+            Button(intent: SwitchMacroIntent()) {
+                ZStack {
+                    Circle()
+                        .stroke(.white.opacity(0.10), lineWidth: 5)
+                    Circle()
+                        .trim(from: 0, to: min(entry.progress, 1))
+                        .stroke(ringColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
 
-                HStack(alignment: .firstTextBaseline, spacing: 1) {
-                    Text("\(entry.total)")
-                        .font(.system(size: 30, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
-                        .invalidatableContent()
-                    Text("/\(entry.goal)g")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.45))
+                    VStack(spacing: 0) {
+                        HStack(alignment: .firstTextBaseline, spacing: 1) {
+                            Text("\(entry.total)")
+                                .font(.system(size: 26, weight: .heavy, design: .rounded))
+                                .foregroundStyle(.white)
+                                .invalidatableContent()
+                            Text("/\(entry.goal)g")
+                                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.45))
+                        }
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+
+                        Text(entry.macro.label)
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(ringColor.opacity(0.9))
+                            .invalidatableContent()
+                    }
+                    .padding(.horizontal, 8)
                 }
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding(.horizontal, 10)
+                .frame(width: 88, height: 88)
             }
-            .frame(width: 92, height: 92)
+            .buttonStyle(.plain)
 
             Group {
                 if entry.total >= entry.goal {
                     Text("GOAL HIT")
-                        .font(.system(size: 11, weight: .heavy, design: .rounded))
+                        .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .tracking(1.5)
                         .foregroundStyle(ringColor)
                 } else {
                     Text("\(entry.remaining)g left")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.55))
                 }
             }
             .invalidatableContent()
+
+            miniSummary
+        }
+    }
+
+    private var miniSummary: some View {
+        HStack(spacing: 6) {
+            ForEach(Macro.allCases, id: \.self) { macro in
+                let isCurrent = macro == entry.macro
+                let total = macroTotal(for: macro)
+                let goal = macroGoal(for: macro)
+                Text("\(macro.shortLabel):\(total)")
+                    .font(.system(size: 8, weight: isCurrent ? .bold : .medium, design: .rounded))
+                    .foregroundStyle(isCurrent ? ringColor.opacity(0.9) : .white.opacity(0.35))
+                    .invalidatableContent()
+                    .opacity(total >= goal ? 1 : 0.8)
+            }
+        }
+    }
+
+    private func macroTotal(for macro: Macro) -> Int {
+        switch macro {
+        case .protein: entry.proteinTotal
+        case .carbs: entry.carbsTotal
+        case .fat: entry.fatTotal
+        }
+    }
+
+    private func macroGoal(for macro: Macro) -> Int {
+        switch macro {
+        case .protein: entry.proteinGoal
+        case .carbs: entry.carbsGoal
+        case .fat: entry.fatGoal
         }
     }
 
@@ -151,7 +206,7 @@ struct ProteInWidgetView: View {
     }
 
     private func addButton(_ amount: Int) -> some View {
-        Button(intent: LogProteinIntent(amount: amount)) {
+        Button(intent: LogMacroIntent(amount: amount)) {
             VStack(spacing: 1) {
                 Text("+\(amount)")
                     .font(.system(size: 17, weight: .bold, design: .rounded))
@@ -171,7 +226,7 @@ struct ProteInWidgetView: View {
     }
 
     private var undoButton: some View {
-        Button(intent: UndoProteinIntent()) {
+        Button(intent: UndoMacroIntent()) {
             HStack(spacing: 4) {
                 Image(systemName: "arrow.uturn.backward")
                     .font(.system(size: 9, weight: .bold))
@@ -193,7 +248,13 @@ struct ProteInWidgetView: View {
 #Preview(as: .systemMedium) {
     ProteInWidget()
 } timeline: {
-    ProteinEntry(date: .now, total: 0, goal: 165, lastEntry: nil)
-    ProteinEntry(date: .now, total: 94, goal: 165, lastEntry: 10)
-    ProteinEntry(date: .now, total: 170, goal: 165, lastEntry: 5)
+    MacroEntry(date: .now, macro: .protein, total: 94, goal: 165, lastEntry: 10,
+               proteinTotal: 94, carbsTotal: 120, fatTotal: 30,
+               proteinGoal: 165, carbsGoal: 250, fatGoal: 65)
+    MacroEntry(date: .now, macro: .carbs, total: 120, goal: 250, lastEntry: 5,
+               proteinTotal: 94, carbsTotal: 120, fatTotal: 30,
+               proteinGoal: 165, carbsGoal: 250, fatGoal: 65)
+    MacroEntry(date: .now, macro: .fat, total: 65, goal: 65, lastEntry: 10,
+               proteinTotal: 165, carbsTotal: 200, fatTotal: 65,
+               proteinGoal: 165, carbsGoal: 250, fatGoal: 65)
 }

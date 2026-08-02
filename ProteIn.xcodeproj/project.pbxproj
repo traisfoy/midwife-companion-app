@@ -17,6 +17,8 @@
 		AB0000000000000000000057 /* ProteinStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000048 /* ProteinStore.swift */; };
 		AB0000000000000000000058 /* ProteinIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000049 /* ProteinIntents.swift */; };
 		AB0000000000000000000059 /* ProteInWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000021 /* ProteInWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AB0000000000000000000060 /* MacroColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000070 /* MacroColors.swift */; };
+		AB0000000000000000000061 /* MacroColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000070 /* MacroColors.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +58,7 @@
 		AB0000000000000000000047 /* ProteInWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ProteInWidget.entitlements; sourceTree = "<group>"; };
 		AB0000000000000000000048 /* ProteinStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProteinStore.swift; sourceTree = "<group>"; };
 		AB0000000000000000000049 /* ProteinIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProteinIntents.swift; sourceTree = "<group>"; };
+		AB0000000000000000000070 /* MacroColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroColors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +125,7 @@
 			children = (
 				AB0000000000000000000048 /* ProteinStore.swift */,
 				AB0000000000000000000049 /* ProteinIntents.swift */,
+				AB0000000000000000000070 /* MacroColors.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -229,6 +233,7 @@
 				AB0000000000000000000051 /* GoalView.swift in Sources */,
 				AB0000000000000000000053 /* ProteinStore.swift in Sources */,
 				AB0000000000000000000054 /* ProteinIntents.swift in Sources */,
+				AB0000000000000000000060 /* MacroColors.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,6 +245,7 @@
 				AB0000000000000000000056 /* ProteInWidget.swift in Sources */,
 				AB0000000000000000000057 /* ProteinStore.swift in Sources */,
 				AB0000000000000000000058 /* ProteinIntents.swift in Sources */,
+				AB0000000000000000000061 /* MacroColors.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
