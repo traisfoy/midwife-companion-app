@@ -129,7 +129,7 @@ private struct ChoosePathStep: View {
                 pathCard(
                     icon: "wand.and.stars",
                     title: "Help me with my macros",
-                    subtitle: "Answer a few questions — we'll suggest numbers",
+                    subtitle: "Answer a few questions and we'll suggest numbers",
                     action: onCalculator
                 )
                 pathCard(
@@ -257,6 +257,40 @@ private struct CalculatorStep: View {
         case ft, cm
     }
 
+    enum Activity: CaseIterable {
+        case sedentary, light, moderate, active, veryActive
+
+        var label: String {
+            switch self {
+            case .sedentary: "Sedentary"
+            case .light: "Light"
+            case .moderate: "Moderate"
+            case .active: "Active"
+            case .veryActive: "Very Active"
+            }
+        }
+
+        var detail: String {
+            switch self {
+            case .sedentary: "Little to no exercise"
+            case .light: "1-3 days/week"
+            case .moderate: "3-5 days/week"
+            case .active: "6-7 days/week"
+            case .veryActive: "Athlete / 2x daily"
+            }
+        }
+
+        var multiplier: Double {
+            switch self {
+            case .sedentary: 1.2
+            case .light: 1.375
+            case .moderate: 1.55
+            case .active: 1.725
+            case .veryActive: 1.9
+            }
+        }
+    }
+
     @State private var selectedSex: Sex = .male
     @State private var weightText = ""
     @State private var weightUnit: WeightUnit = .lbs
@@ -264,6 +298,7 @@ private struct CalculatorStep: View {
     @State private var heightInchesText = ""
     @State private var heightCmText = ""
     @State private var heightUnit: HeightUnit = .ft
+    @State private var selectedActivity: Activity = .moderate
     @State private var selectedGoal: Goal = .maintain
     @State private var showResults = false
     @FocusState private var focusedInput: String?
@@ -297,7 +332,7 @@ private struct CalculatorStep: View {
             bmr = 10 * kg + 6.25 * cm - 5 * 30 - 161
         }
 
-        let tdee = bmr * 1.55
+        let tdee = bmr * selectedActivity.multiplier
         let targetCal = tdee * selectedGoal.calorieMultiplier
 
         let proteinG = kg * selectedGoal.proteinPerKg
@@ -315,7 +350,7 @@ private struct CalculatorStep: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 28) {
+            VStack(spacing: 24) {
                 HStack {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
@@ -340,7 +375,7 @@ private struct CalculatorStep: View {
     }
 
     private var inputSection: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             VStack(spacing: 10) {
                 Text("About You")
                     .font(.system(size: 34, weight: .heavy))
@@ -350,8 +385,7 @@ private struct CalculatorStep: View {
                     .foregroundStyle(.white.opacity(0.55))
             }
 
-            // Sex picker
-            inputCard {
+            inputCard(highlight: false) {
                 VStack(spacing: 8) {
                     Text("Sex")
                         .font(.system(size: 13, weight: .bold))
@@ -366,8 +400,7 @@ private struct CalculatorStep: View {
                 }
             }
 
-            // Weight
-            inputCard {
+            inputCard(highlight: focusedInput == "weight") {
                 VStack(spacing: 8) {
                     Text("Weight")
                         .font(.system(size: 13, weight: .bold))
@@ -376,10 +409,10 @@ private struct CalculatorStep: View {
                         TextField("180", text: $weightText)
                             .keyboardType(.decimalPad)
                             .focused($focusedInput, equals: "weight")
-                            .font(.system(size: 40, weight: .heavy))
+                            .font(.system(size: 36, weight: .heavy))
                             .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
-                            .fixedSize()
+                            .frame(maxWidth: .infinity)
                         Picker("", selection: $weightUnit) {
                             ForEach(WeightUnit.allCases, id: \.self) { u in
                                 Text(u.rawValue).tag(u)
@@ -391,49 +424,50 @@ private struct CalculatorStep: View {
                 }
             }
 
-            // Height
-            inputCard {
+            inputCard(highlight: focusedInput == "feet" || focusedInput == "inches" || focusedInput == "cm") {
                 VStack(spacing: 8) {
                     Text("Height")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.white.opacity(0.5))
                     HStack(spacing: 12) {
                         if heightUnit == .ft {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 2) {
                                 TextField("5", text: $heightFeetText)
                                     .keyboardType(.numberPad)
                                     .focused($focusedInput, equals: "feet")
-                                    .font(.system(size: 40, weight: .heavy))
+                                    .font(.system(size: 36, weight: .heavy))
                                     .foregroundStyle(.white)
-                                    .multilineTextAlignment(.center)
-                                    .fixedSize()
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(minWidth: 30, maxWidth: 50)
                                 Text("ft")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(.white.opacity(0.45))
                                 TextField("10", text: $heightInchesText)
                                     .keyboardType(.numberPad)
                                     .focused($focusedInput, equals: "inches")
-                                    .font(.system(size: 40, weight: .heavy))
+                                    .font(.system(size: 36, weight: .heavy))
                                     .foregroundStyle(.white)
-                                    .multilineTextAlignment(.center)
-                                    .fixedSize()
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(minWidth: 30, maxWidth: 50)
                                 Text("in")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(.white.opacity(0.45))
                             }
+                            .frame(maxWidth: .infinity)
                         } else {
                             HStack(spacing: 4) {
                                 TextField("170", text: $heightCmText)
                                     .keyboardType(.numberPad)
                                     .focused($focusedInput, equals: "cm")
-                                    .font(.system(size: 40, weight: .heavy))
+                                    .font(.system(size: 36, weight: .heavy))
                                     .foregroundStyle(.white)
                                     .multilineTextAlignment(.center)
-                                    .fixedSize()
+                                    .frame(maxWidth: .infinity)
                                 Text("cm")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(.white.opacity(0.45))
                             }
+                            .frame(maxWidth: .infinity)
                         }
                         Picker("", selection: $heightUnit) {
                             ForEach(HeightUnit.allCases, id: \.self) { u in
@@ -445,6 +479,19 @@ private struct CalculatorStep: View {
                     }
                 }
             }
+
+            // Activity level
+            VStack(spacing: 8) {
+                Text("Activity Level")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.5))
+                VStack(spacing: 8) {
+                    ForEach(Activity.allCases, id: \.self) { activity in
+                        activityRow(activity)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
 
             // Goal
             VStack(spacing: 8) {
@@ -465,11 +512,11 @@ private struct CalculatorStep: View {
             .disabled(!inputsValid)
             .opacity(inputsValid ? 1 : 0.4)
             .padding(.horizontal, 40)
-            .padding(.top, 8)
+            .padding(.top, 4)
         }
     }
 
-    private func inputCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    private func inputCard<Content: View>(highlight: Bool, @ViewBuilder content: () -> Content) -> some View {
         content()
             .padding(.vertical, 16)
             .padding(.horizontal, 24)
@@ -477,9 +524,48 @@ private struct CalculatorStep: View {
             .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                    .strokeBorder(
+                        highlight ? Color.blue.opacity(0.5) : .white.opacity(0.08),
+                        lineWidth: highlight ? 1 : 0.5
+                    )
             )
+            .animation(.easeInOut(duration: 0.15), value: highlight)
             .padding(.horizontal, 24)
+    }
+
+    private func activityRow(_ activity: Activity) -> some View {
+        Button {
+            selectedActivity = activity
+        } label: {
+            HStack(spacing: 12) {
+                Text(activity.label)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(selectedActivity == activity ? .white : .white.opacity(0.5))
+                Text(activity.detail)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.35))
+                Spacer()
+                if selectedActivity == activity {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.blue)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                selectedActivity == activity ? .white.opacity(0.10) : .white.opacity(0.04),
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(
+                        selectedActivity == activity ? .blue.opacity(0.4) : .white.opacity(0.06),
+                        lineWidth: selectedActivity == activity ? 1 : 0.5
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func goalPill(_ goal: Goal) -> some View {
@@ -537,7 +623,7 @@ private struct CalculatorStep: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
-            Text("Estimated using the Mifflin-St Jeor equation\nwith moderate activity. Adjust as needed.")
+            Text("Estimated using the Mifflin-St Jeor equation\nwith \(selectedActivity.label.lowercased()) activity. Adjust as needed.")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.3))
                 .multilineTextAlignment(.center)
@@ -716,7 +802,7 @@ private struct WidgetGuideStep: View {
 
             VStack(spacing: 20) {
                 guideStep(number: 1, text: "Long press your Home Screen")
-                guideStep(number: 2, text: "Tap Edit \u{2192} Add Widget (or the + button)")
+                guideStep(number: 2, text: "Tap Edit > Add Widget (or the + button)")
                 guideStep(number: 3, text: "Search \"JstMacros\"")
                 guideStep(number: 4, text: "Add the medium widget")
             }

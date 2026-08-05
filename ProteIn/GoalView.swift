@@ -88,7 +88,7 @@ struct GoalView: View {
                     todaySummary
 
                     VStack(spacing: 6) {
-                        Text("Add the JstMacros widget to your Home Screen \u{2014}\nthat's where the tracking happens.")
+                        Text("Add the JstMacros widget to your Home Screen.\nThat's where the tracking happens.")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.white.opacity(0.3))
                             .multilineTextAlignment(.center)
@@ -248,7 +248,7 @@ private struct HelpSheet: View {
 
                         VStack(spacing: 12) {
                             stepRow(number: 1, text: "Long press your Home Screen")
-                            stepRow(number: 2, text: "Tap Edit \u{2192} Add Widget (or the + button)")
+                            stepRow(number: 2, text: "Tap Edit > Add Widget (or the + button)")
                             stepRow(number: 3, text: "Search \"JstMacros\"")
                             stepRow(number: 4, text: "Add the medium widget")
                         }
