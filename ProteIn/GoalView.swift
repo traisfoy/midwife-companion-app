@@ -12,6 +12,10 @@ struct GoalView: View {
     @State private var showHelp = false
     @FocusState private var focusedField: Macro?
 
+    @State private var originalProtein = ""
+    @State private var originalCarbs = ""
+    @State private var originalFat = ""
+
     private func parsed(_ text: String) -> Int? {
         guard let v = Int(text.trimmingCharacters(in: .whitespaces)),
               (1...999).contains(v) else { return nil }
@@ -22,6 +26,12 @@ struct GoalView: View {
         parsed(proteinText) != nil &&
         parsed(carbsText) != nil &&
         parsed(fatText) != nil
+    }
+
+    private var hasChanges: Bool {
+        proteinText != originalProtein ||
+        carbsText != originalCarbs ||
+        fatText != originalFat
     }
 
     var body: some View {
@@ -58,9 +68,15 @@ struct GoalView: View {
                         Text("JstMacros")
                             .font(.system(size: 40, weight: .heavy))
                             .foregroundStyle(.white)
-                        Text("Edit your daily goals")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.55))
+
+                        HStack(spacing: 6) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text("Edit your daily goals")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.65))
+                        }
                     }
 
                     VStack(spacing: 16) {
@@ -80,21 +96,22 @@ struct GoalView: View {
                                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                             )
                     }
-                    .disabled(!allValid)
-                    .opacity(allValid ? 1 : 0.4)
+                    .disabled(!allValid || !hasChanges)
+                    .opacity(allValid && hasChanges ? 1 : 0.35)
                     .padding(.horizontal, 40)
                     .animation(.easeInOut(duration: 0.2), value: showSavedConfirmation)
+                    .animation(.easeInOut(duration: 0.15), value: hasChanges)
 
                     todaySummary
 
                     VStack(spacing: 6) {
                         Text("Add the JstMacros widget to your Home Screen.\nThat's where the tracking happens.")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.3))
+                            .foregroundStyle(.white.opacity(0.35))
                             .multilineTextAlignment(.center)
                         Text("Tap the ring on the widget to switch macros.")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.3))
+                            .foregroundStyle(.white.opacity(0.35))
                     }
                     .padding(.bottom, 24)
                 }
@@ -103,9 +120,15 @@ struct GoalView: View {
         }
         .onAppear {
             MacroStore.migrateIfNeeded()
-            proteinText = "\(MacroStore.goal(for: .protein))"
-            carbsText = "\(MacroStore.goal(for: .carbs))"
-            fatText = "\(MacroStore.goal(for: .fat))"
+            let p = "\(MacroStore.goal(for: .protein))"
+            let c = "\(MacroStore.goal(for: .carbs))"
+            let f = "\(MacroStore.goal(for: .fat))"
+            proteinText = p
+            carbsText = c
+            fatText = f
+            originalProtein = p
+            originalCarbs = c
+            originalFat = f
         }
         .onTapGesture {
             focusedField = nil
@@ -117,10 +140,15 @@ struct GoalView: View {
 
     private func macroRow(label: String, text: Binding<String>, macro: Macro) -> some View {
         HStack(spacing: 12) {
-            Text(label)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.white.opacity(0.7))
-                .frame(width: 72, alignment: .leading)
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(macro.ringColor)
+                    .frame(width: 8, height: 8)
+                Text(label)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .frame(width: 90, alignment: .leading)
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 TextField("\(macro.defaultGoal)", text: text)
@@ -132,7 +160,7 @@ struct GoalView: View {
                     .fixedSize()
                 Text("g")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.45))
+                    .foregroundStyle(.white.opacity(0.5))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -150,15 +178,21 @@ struct GoalView: View {
     }
 
     private var todaySummary: some View {
-        HStack(spacing: 20) {
-            ForEach(Macro.allCases, id: \.self) { macro in
-                VStack(spacing: 2) {
-                    Text("\(MacroStore.todayTotal(for: macro))g")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.6))
-                    Text(macro.label)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.35))
+        VStack(spacing: 10) {
+            Text("Today's Progress")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.45))
+
+            HStack(spacing: 20) {
+                ForEach(Macro.allCases, id: \.self) { macro in
+                    VStack(spacing: 2) {
+                        Text("\(MacroStore.todayTotal(for: macro))g")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.65))
+                        Text(macro.label)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
                 }
             }
         }
@@ -176,6 +210,10 @@ struct GoalView: View {
         focusedField = nil
         WidgetCenter.shared.reloadAllTimelines()
 
+        originalProtein = proteinText
+        originalCarbs = carbsText
+        originalFat = fatText
+
         showSavedConfirmation = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             showSavedConfirmation = false
@@ -189,6 +227,7 @@ private struct HelpSheet: View {
     @AppStorage("hasOnboarded", store: MacroStore.defaults)
     private var hasOnboarded = false
     @Environment(\.dismiss) private var dismiss
+    @State private var showWidgetSteps = false
 
     var body: some View {
         ZStack {
@@ -217,40 +256,59 @@ private struct HelpSheet: View {
 
                     VStack(spacing: 10) {
                         Text("How to Use")
-                            .font(.system(size: 28, weight: .heavy))
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(.white)
                         Text("Everything happens on your\nhome screen widget")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.55))
+                            .foregroundStyle(.white.opacity(0.65))
                             .multilineTextAlignment(.center)
                     }
 
-                    VStack(spacing: 16) {
-                        helpRow(icon: "plus.circle.fill", color: .blue,
+                    VStack(alignment: .leading, spacing: 20) {
+                        sectionHeader("Tracking")
+                        helpRow(icon: "plus.circle.fill", color: Macro.protein.ringColor,
                                 title: "Log grams",
                                 detail: "Tap +1, +5, or +10 on the widget to add grams to your current macro.")
-                        helpRow(icon: "circle.circle.fill", color: .orange,
+                        helpRow(icon: "circle.circle.fill", color: Macro.carbs.ringColor,
                                 title: "Switch macros",
                                 detail: "Tap the progress ring to cycle between Protein, Carbs, and Fat.")
-                        helpRow(icon: "arrow.uturn.backward.circle.fill", color: .purple,
+                        helpRow(icon: "arrow.uturn.backward.circle.fill", color: .white.opacity(0.5),
                                 title: "Undo",
                                 detail: "Tap the undo button to remove your last entry.")
-                        helpRow(icon: "moon.fill", color: .green,
+
+                        sectionHeader("Resets")
+                        helpRow(icon: "moon.fill", color: .white.opacity(0.5),
                                 title: "Daily reset",
                                 detail: "All totals reset to zero automatically at midnight.")
                     }
                     .padding(.horizontal, 24)
 
-                    VStack(spacing: 16) {
-                        Text("Adding the Widget")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.white)
+                    VStack(spacing: 12) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showWidgetSteps.toggle()
+                            }
+                        } label: {
+                            HStack {
+                                Text("Adding the Widget")
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Image(systemName: showWidgetSteps ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.45))
+                            }
+                        }
+                        .buttonStyle(.plain)
 
-                        VStack(spacing: 12) {
-                            stepRow(number: 1, text: "Long press your Home Screen")
-                            stepRow(number: 2, text: "Tap Edit, then Add Widget")
-                            stepRow(number: 3, text: "Search \"JstMacros\"")
-                            stepRow(number: 4, text: "Add the medium widget")
+                        if showWidgetSteps {
+                            VStack(spacing: 10) {
+                                stepRow(number: 1, text: "Long press your Home Screen")
+                                stepRow(number: 2, text: "Tap Edit, then Add Widget")
+                                stepRow(number: 3, text: "Search \"JstMacros\"")
+                                stepRow(number: 4, text: "Add the medium widget")
+                            }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
                     .padding(.horizontal, 24)
@@ -259,7 +317,7 @@ private struct HelpSheet: View {
                         hasOnboarded = false
                         dismiss()
                     } label: {
-                        Text("Recalculate My Macros")
+                        Text("Recalculate Goals")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, minHeight: 48)
@@ -277,6 +335,13 @@ private struct HelpSheet: View {
         .preferredColorScheme(.dark)
     }
 
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.white.opacity(0.35))
+            .tracking(0.8)
+    }
+
     private func helpRow(icon: String, color: Color, title: String, detail: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
@@ -289,7 +354,7 @@ private struct HelpSheet: View {
                     .foregroundStyle(.white)
                 Text(detail)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.55))
             }
             Spacer()
         }

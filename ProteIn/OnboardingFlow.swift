@@ -5,11 +5,7 @@ struct OnboardingFlow: View {
     @State private var step: Step = .welcome
 
     enum Step {
-        case welcome
-        case choosePath
-        case calculator
-        case manualGoals
-        case widgetGuide
+        case welcome, choosePath, calculator, manualGoals, widgetGuide
     }
 
     var body: some View {
@@ -70,17 +66,21 @@ private struct WelcomeStep: View {
                 Text("JstMacros")
                     .font(.system(size: 44, weight: .heavy))
                     .foregroundStyle(.white)
-                Text("Track your macros from your\nhome screen. No app to open.")
+                Text("Track your macros from your\nhome screen widget.")
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.white.opacity(0.65))
                     .multilineTextAlignment(.center)
             }
 
             VStack(spacing: 14) {
-                featureRow(icon: "plus.circle.fill", color: .blue, text: "Tap +1, +5, +10 to log grams")
-                featureRow(icon: "circle.circle.fill", color: .orange, text: "Tap the ring to switch Protein / Carbs / Fat")
-                featureRow(icon: "arrow.uturn.backward.circle.fill", color: .purple, text: "Undo mistakes instantly")
-                featureRow(icon: "moon.fill", color: .green, text: "Resets automatically at midnight")
+                featureRow(icon: "plus.circle.fill", color: Macro.protein.ringColor,
+                           text: "Tap +1, +5, +10 to log grams")
+                featureRow(icon: "circle.circle.fill", color: Macro.carbs.ringColor,
+                           text: "Tap the ring to switch Protein / Carbs / Fat")
+                featureRow(icon: "arrow.uturn.backward.circle.fill", color: .white.opacity(0.5),
+                           text: "Undo mistakes instantly")
+                featureRow(icon: "moon.fill", color: .white.opacity(0.5),
+                           text: "Resets automatically at midnight")
             }
             .padding(.horizontal, 32)
 
@@ -100,7 +100,7 @@ private struct WelcomeStep: View {
                 .frame(width: 28)
             Text(text)
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(.white.opacity(0.7))
             Spacer()
         }
     }
@@ -118,11 +118,11 @@ private struct ChoosePathStep: View {
 
             VStack(spacing: 10) {
                 Text("Set Your Goals")
-                    .font(.system(size: 34, weight: .heavy))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
                 Text("How would you like to start?")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.65))
             }
 
             VStack(spacing: 16) {
@@ -151,7 +151,7 @@ private struct ChoosePathStep: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(.white.opacity(0.7))
                     .frame(width: 36)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
@@ -159,12 +159,12 @@ private struct ChoosePathStep: View {
                         .foregroundStyle(.white)
                     Text(subtitle)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.45))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(.white.opacity(0.35))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 18)
@@ -237,8 +237,8 @@ private struct CalculatorStep: View {
 
         var explainer: String {
             switch self {
-            case .cut: "Higher protein preserves muscle while in a deficit. Moderate fat keeps hormones balanced."
-            case .maintain: "Balanced split to support daily activity and recovery without gaining or losing."
+            case .cut: "Higher protein preserves muscle in a deficit. Moderate fat keeps hormones balanced."
+            case .maintain: "Balanced split to support daily activity and recovery."
             case .bulk: "Extra carbs fuel training. Protein stays high to support muscle growth."
             }
         }
@@ -349,46 +349,85 @@ private struct CalculatorStep: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                HStack {
-                    Button(action: onBack) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    navBar
 
-                if !showResults {
-                    inputSection
-                } else if let rec = recommendation {
-                    resultsSection(rec)
+                    if !showResults {
+                        inputSection
+                    } else if let rec = recommendation {
+                        resultsSection(rec)
+                    }
                 }
+                .padding(.bottom, 100)
             }
-            .padding(.bottom, 40)
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture { focusedInput = nil }
+
+            if !showResults {
+                VStack {
+                    pillButton("Calculate My Macros") {
+                        withAnimation { showResults = true }
+                    }
+                    .disabled(!inputsValid)
+                    .opacity(inputsValid ? 1 : 0.4)
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 8)
+                }
+                .padding(.top, 12)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.02, green: 0.02, blue: 0.03),
+                            Color(red: 0.02, green: 0.02, blue: 0.03).opacity(0)
+                        ],
+                        startPoint: .bottom,
+                        endPoint: .top
+                    )
+                    .frame(height: 80)
+                    .allowsHitTesting(false),
+                    alignment: .bottom
+                )
+            }
         }
-        .scrollDismissesKeyboard(.interactively)
-        .onTapGesture { focusedInput = nil }
+    }
+
+    private var navBar: some View {
+        HStack {
+            Button(action: onBack) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Back")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                .foregroundStyle(.white.opacity(0.65))
+            }
+            Spacer()
+            Text(showResults ? "Step 2 of 2" : "Step 1 of 2")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.white.opacity(0.45))
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
     }
 
     private var inputSection: some View {
         VStack(spacing: 20) {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 Text("About You")
-                    .font(.system(size: 34, weight: .heavy))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
                 Text("We'll use this to estimate your macros")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.white.opacity(0.65))
             }
 
             inputCard(highlight: false) {
                 VStack(spacing: 8) {
                     Text("Sex")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.5))
                     Picker("", selection: $selectedSex) {
                         ForEach(Sex.allCases, id: \.self) { s in
@@ -403,7 +442,7 @@ private struct CalculatorStep: View {
             inputCard(highlight: focusedInput == "weight") {
                 VStack(spacing: 8) {
                     Text("Weight")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.5))
                     HStack(spacing: 12) {
                         TextField("180", text: $weightText)
@@ -427,7 +466,7 @@ private struct CalculatorStep: View {
             inputCard(highlight: focusedInput == "feet" || focusedInput == "inches" || focusedInput == "cm") {
                 VStack(spacing: 8) {
                     Text("Height")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.5))
                     HStack(spacing: 12) {
                         if heightUnit == .ft {
@@ -440,8 +479,8 @@ private struct CalculatorStep: View {
                                     .multilineTextAlignment(.trailing)
                                     .frame(minWidth: 30, maxWidth: 50)
                                 Text("ft")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(.white.opacity(0.45))
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.5))
                                 TextField("10", text: $heightInchesText)
                                     .keyboardType(.numberPad)
                                     .focused($focusedInput, equals: "inches")
@@ -450,8 +489,8 @@ private struct CalculatorStep: View {
                                     .multilineTextAlignment(.trailing)
                                     .frame(minWidth: 30, maxWidth: 50)
                                 Text("in")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(.white.opacity(0.45))
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.5))
                             }
                             .frame(maxWidth: .infinity)
                         } else {
@@ -464,8 +503,8 @@ private struct CalculatorStep: View {
                                     .multilineTextAlignment(.center)
                                     .frame(maxWidth: .infinity)
                                 Text("cm")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(.white.opacity(0.45))
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.5))
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -480,12 +519,11 @@ private struct CalculatorStep: View {
                 }
             }
 
-            // Activity level
             VStack(spacing: 8) {
                 Text("Activity Level")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.5))
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     ForEach(Activity.allCases, id: \.self) { activity in
                         activityRow(activity)
                     }
@@ -493,37 +531,28 @@ private struct CalculatorStep: View {
             }
             .padding(.horizontal, 24)
 
-            // Goal
             VStack(spacing: 8) {
                 Text("Goal")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.5))
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     ForEach(Goal.allCases, id: \.self) { goal in
                         goalPill(goal)
                     }
                 }
             }
             .padding(.horizontal, 24)
-
-            pillButton("Calculate My Macros") {
-                withAnimation { showResults = true }
-            }
-            .disabled(!inputsValid)
-            .opacity(inputsValid ? 1 : 0.4)
-            .padding(.horizontal, 40)
-            .padding(.top, 4)
         }
     }
 
     private func inputCard<Content: View>(highlight: Bool, @ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(.vertical, 16)
-            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 20)
             .frame(maxWidth: .infinity)
-            .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(
                         highlight ? Color.blue.opacity(0.5) : .white.opacity(0.08),
                         lineWidth: highlight ? 1 : 0.5
@@ -537,13 +566,13 @@ private struct CalculatorStep: View {
         Button {
             selectedActivity = activity
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Text(activity.label)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(selectedActivity == activity ? .white : .white.opacity(0.5))
+                    .font(.system(size: 15, weight: selectedActivity == activity ? .bold : .medium))
+                    .foregroundStyle(selectedActivity == activity ? .white : .white.opacity(0.65))
                 Text(activity.detail)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(.white.opacity(0.45))
                 Spacer()
                 if selectedActivity == activity {
                     Image(systemName: "checkmark.circle.fill")
@@ -551,14 +580,14 @@ private struct CalculatorStep: View {
                         .foregroundStyle(.blue)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
             .background(
                 selectedActivity == activity ? .white.opacity(0.10) : .white.opacity(0.04),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(
                         selectedActivity == activity ? .blue.opacity(0.4) : .white.opacity(0.06),
                         lineWidth: selectedActivity == activity ? 1 : 0.5
@@ -572,24 +601,24 @@ private struct CalculatorStep: View {
         Button {
             selectedGoal = goal
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: 5) {
                 Image(systemName: goal.icon)
-                    .font(.system(size: 22))
+                    .font(.system(size: 20))
                 Text(goal.label)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                 Text(goal.subtitle)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.45))
+                    .foregroundStyle(.white.opacity(0.5))
             }
-            .foregroundStyle(selectedGoal == goal ? .white : .white.opacity(0.5))
+            .foregroundStyle(selectedGoal == goal ? .white : .white.opacity(0.55))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 12)
             .background(
                 selectedGoal == goal ? .white.opacity(0.12) : .white.opacity(0.04),
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(
                         selectedGoal == goal ? .white.opacity(0.2) : .white.opacity(0.06),
                         lineWidth: 0.5
@@ -601,16 +630,16 @@ private struct CalculatorStep: View {
 
     private func resultsSection(_ rec: (protein: Int, carbs: Int, fat: Int)) -> some View {
         VStack(spacing: 24) {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 Text("Your Macros")
-                    .font(.system(size: 34, weight: .heavy))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
                 Text("Based on your stats and \(selectedGoal.label.lowercased()) goal")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.white.opacity(0.65))
             }
 
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 resultRow(macro: .protein, value: rec.protein)
                 resultRow(macro: .carbs, value: rec.carbs)
                 resultRow(macro: .fat, value: rec.fat)
@@ -619,14 +648,15 @@ private struct CalculatorStep: View {
 
             Text(selectedGoal.explainer)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.45))
+                .foregroundStyle(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
-            Text("Estimated using the Mifflin-St Jeor equation\nwith \(selectedActivity.label.lowercased()) activity. Adjust as needed.")
+            Text("Estimated using the Mifflin-St Jeor equation with \(selectedActivity.label.lowercased()) activity. Adjust as needed.")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.white.opacity(0.3))
+                .foregroundStyle(.white.opacity(0.4))
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
 
             VStack(spacing: 12) {
                 pillButton("Use These Macros") {
@@ -642,7 +672,7 @@ private struct CalculatorStep: View {
                 } label: {
                     Text("Adjust inputs")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.55))
                 }
             }
             .padding(.horizontal, 40)
@@ -655,18 +685,18 @@ private struct CalculatorStep: View {
                 .fill(macro.ringColor)
                 .frame(width: 10, height: 10)
             Text(macro.label)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(.white.opacity(0.8))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.7))
             Spacer()
             Text("\(value)g")
-                .font(.system(size: 28, weight: .heavy))
+                .font(.system(size: 26, weight: .heavy))
                 .foregroundStyle(.white)
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.vertical, 14)
+        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
         )
     }
@@ -696,35 +726,47 @@ private struct ManualGoalsStep: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                HStack {
-                    Button(action: onBack) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.6))
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    HStack {
+                        Button(action: onBack) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Back")
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            .foregroundStyle(.white.opacity(0.65))
+                        }
+                        Spacer()
                     }
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
 
-                VStack(spacing: 10) {
-                    Text("Your Macros")
-                        .font(.system(size: 34, weight: .heavy))
-                        .foregroundStyle(.white)
-                    Text("Enter your daily goals in grams")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.55))
-                }
+                    VStack(spacing: 8) {
+                        Text("Your Macros")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(.white)
+                        Text("Enter your daily goals in grams")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.65))
+                    }
 
-                VStack(spacing: 16) {
-                    macroRow(label: "Protein", text: $proteinText, macro: .protein)
-                    macroRow(label: "Carbs", text: $carbsText, macro: .carbs)
-                    macroRow(label: "Fat", text: $fatText, macro: .fat)
+                    VStack(spacing: 12) {
+                        macroRow(label: "Protein", text: $proteinText, macro: .protein)
+                        macroRow(label: "Carbs", text: $carbsText, macro: .carbs)
+                        macroRow(label: "Fat", text: $fatText, macro: .fat)
+                    }
+                    .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 24)
+                .padding(.bottom, 100)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onAppear { focusedField = .protein }
+            .onTapGesture { focusedField = nil }
 
+            VStack {
                 pillButton("Save Goals") {
                     guard let p = parsed(proteinText),
                           let c = parsed(carbsText),
@@ -738,39 +780,43 @@ private struct ManualGoalsStep: View {
                 .disabled(!allValid)
                 .opacity(allValid ? 1 : 0.4)
                 .padding(.horizontal, 40)
+                .padding(.bottom, 8)
             }
+            .padding(.top, 12)
         }
-        .scrollDismissesKeyboard(.interactively)
-        .onAppear { focusedField = .protein }
-        .onTapGesture { focusedField = nil }
     }
 
     private func macroRow(label: String, text: Binding<String>, macro: Macro) -> some View {
         HStack(spacing: 12) {
-            Text(label)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.white.opacity(0.7))
-                .frame(width: 72, alignment: .leading)
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(macro.ringColor)
+                    .frame(width: 8, height: 8)
+                Text(label)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .frame(width: 90, alignment: .leading)
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 TextField("\(macro.defaultGoal)", text: text)
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: macro)
-                    .font(.system(size: 32, weight: .heavy))
+                    .font(.system(size: 30, weight: .heavy))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.trailing)
                     .fixedSize()
                 Text("g")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.45))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.5))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
-        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(
                     focusedField == macro ? macro.ringColor.opacity(0.5) : .white.opacity(0.08),
                     lineWidth: focusedField == macro ? 1 : 0.5
@@ -788,20 +834,19 @@ private struct WidgetGuideStep: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 28) {
+            VStack(spacing: 24) {
                 Spacer().frame(height: 20)
 
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     Text("Add Your Widget")
-                        .font(.system(size: 34, weight: .heavy))
+                        .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.white)
-                    Text("The widget is where all the\ntracking happens")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.55))
-                        .multilineTextAlignment(.center)
+                    Text("The widget is where all the tracking happens")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.65))
                 }
 
-                VStack(spacing: 16) {
+                VStack(spacing: 14) {
                     guideStep(number: 1, text: "Long press your Home Screen")
                     guideStep(number: 2, text: "Tap Edit, then Add Widget")
                     guideStep(number: 3, text: "Search \"JstMacros\"")
@@ -813,20 +858,7 @@ private struct WidgetGuideStep: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .shadow(color: .white.opacity(0.05), radius: 12, y: 4)
                     .padding(.horizontal, 40)
-
-                VStack(spacing: 8) {
-                    HStack(spacing: 12) {
-                        tipPill(icon: "hand.tap.fill", text: "Tap +1, +5, +10\nto log grams")
-                        tipPill(icon: "circle.circle", text: "Tap the ring to\nswitch Protein / Carbs / Fat")
-                    }
-                    HStack(spacing: 12) {
-                        tipPill(icon: "arrow.uturn.backward", text: "Tap undo to\nremove last entry")
-                        tipPill(icon: "moon.stars.fill", text: "Totals reset\nat midnight")
-                    }
-                }
-                .padding(.horizontal, 24)
 
                 pillButton("I'm Ready") {
                     hasOnboarded = true
@@ -838,32 +870,17 @@ private struct WidgetGuideStep: View {
     }
 
     private func guideStep(number: Int, text: String) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             Text("\(number)")
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: 14, weight: .heavy))
                 .foregroundStyle(.black)
-                .frame(width: 28, height: 28)
+                .frame(width: 26, height: 26)
                 .background(.white, in: Circle())
             Text(text)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white.opacity(0.8))
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white.opacity(0.7))
             Spacer()
         }
-    }
-
-    private func tipPill(icon: String, text: String) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundStyle(.white.opacity(0.6))
-            Text(text)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.white.opacity(0.45))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 
@@ -874,7 +891,7 @@ private func pillButton(_ label: String, action: @escaping () -> Void) -> some V
         Text(label)
             .font(.system(size: 17, weight: .bold))
             .foregroundStyle(.black)
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
