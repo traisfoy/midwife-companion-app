@@ -76,7 +76,7 @@ private struct WelcomeStep: View {
                 featureRow(icon: "plus.circle.fill", color: Macro.protein.ringColor,
                            text: "Tap +1, +5, +10 to log grams")
                 featureRow(icon: "circle.circle.fill", color: Macro.carbs.ringColor,
-                           text: "Tap the ring to switch Protein / Carbs / Fat")
+                           text: "Tap the ring to switch macros")
                 featureRow(icon: "arrow.uturn.backward.circle.fill", color: .white.opacity(0.5),
                            text: "Undo mistakes instantly")
                 featureRow(icon: "moon.fill", color: .white.opacity(0.5),
@@ -223,7 +223,7 @@ private struct CalculatorStep: View {
             switch self {
             case .cut: 2.2
             case .maintain: 2.0
-            case .bulk: 2.0
+            case .bulk: 2.2
             }
         }
 
@@ -231,7 +231,7 @@ private struct CalculatorStep: View {
             switch self {
             case .cut: 0.25
             case .maintain: 0.28
-            case .bulk: 0.25
+            case .bulk: 0.28
             }
         }
 
@@ -333,7 +333,11 @@ private struct CalculatorStep: View {
         }
 
         let tdee = bmr * selectedActivity.multiplier
-        let targetCal = tdee * selectedGoal.calorieMultiplier
+        var targetCal = tdee * selectedGoal.calorieMultiplier
+        // Cap the bulk surplus at +300 kcal so high-TDEE users don't get absurd carb targets
+        if selectedGoal == .bulk {
+            targetCal = min(targetCal, tdee + 300)
+        }
 
         let proteinG = kg * selectedGoal.proteinPerKg
         let fatCal = targetCal * selectedGoal.fatPercent
@@ -652,7 +656,7 @@ private struct CalculatorStep: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
-            Text("Estimated using the Mifflin-St Jeor equation with \(selectedActivity.label.lowercased()) activity. Adjust as needed.")
+            Text("Estimated with the Mifflin-St Jeor equation based on your activity level. Adjust as needed.")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.4))
                 .multilineTextAlignment(.center)
