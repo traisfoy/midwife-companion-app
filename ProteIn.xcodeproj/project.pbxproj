@@ -19,6 +19,7 @@
 		AB0000000000000000000059 /* ProteInWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000021 /* ProteInWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB0000000000000000000060 /* MacroColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000070 /* MacroColors.swift */; };
 		AB0000000000000000000061 /* MacroColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000070 /* MacroColors.swift */; };
+		AB0000000000000000000062 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000071 /* OnboardingFlow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +60,7 @@
 		AB0000000000000000000048 /* ProteinStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProteinStore.swift; sourceTree = "<group>"; };
 		AB0000000000000000000049 /* ProteinIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProteinIntents.swift; sourceTree = "<group>"; };
 		AB0000000000000000000070 /* MacroColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroColors.swift; sourceTree = "<group>"; };
+		AB0000000000000000000071 /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 			children = (
 				AB0000000000000000000040 /* ProteInApp.swift */,
 				AB0000000000000000000041 /* GoalView.swift */,
+				AB0000000000000000000071 /* OnboardingFlow.swift */,
 				AB0000000000000000000042 /* Assets.xcassets */,
 				AB0000000000000000000043 /* ProteIn.entitlements */,
 			);
@@ -234,6 +237,7 @@
 				AB0000000000000000000053 /* ProteinStore.swift in Sources */,
 				AB0000000000000000000054 /* ProteinIntents.swift in Sources */,
 				AB0000000000000000000060 /* MacroColors.swift in Sources */,
+				AB0000000000000000000062 /* OnboardingFlow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
