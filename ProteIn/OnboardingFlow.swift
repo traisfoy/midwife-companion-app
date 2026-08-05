@@ -787,46 +787,53 @@ private struct WidgetGuideStep: View {
     private var hasOnboarded = false
 
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 28) {
+                Spacer().frame(height: 20)
 
-            VStack(spacing: 10) {
-                Text("Add Your Widget")
-                    .font(.system(size: 34, weight: .heavy))
-                    .foregroundStyle(.white)
-                Text("The widget is where all the\ntracking happens")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
-                    .multilineTextAlignment(.center)
-            }
-
-            VStack(spacing: 20) {
-                guideStep(number: 1, text: "Long press your Home Screen")
-                guideStep(number: 2, text: "Tap Edit > Add Widget (or the + button)")
-                guideStep(number: 3, text: "Search \"JstMacros\"")
-                guideStep(number: 4, text: "Add the medium widget")
-            }
-            .padding(.horizontal, 32)
-
-            VStack(spacing: 8) {
-                HStack(spacing: 12) {
-                    tipPill(icon: "hand.tap.fill", text: "Tap +1, +5, +10\nto log grams")
-                    tipPill(icon: "circle.circle", text: "Tap the ring to\nswitch Protein / Carbs / Fat")
+                VStack(spacing: 10) {
+                    Text("Add Your Widget")
+                        .font(.system(size: 34, weight: .heavy))
+                        .foregroundStyle(.white)
+                    Text("The widget is where all the\ntracking happens")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
                 }
-                HStack(spacing: 12) {
-                    tipPill(icon: "arrow.uturn.backward", text: "Tap undo to\nremove last entry")
-                    tipPill(icon: "moon.stars.fill", text: "Totals reset\nat midnight")
+
+                VStack(spacing: 16) {
+                    guideStep(number: 1, text: "Long press your Home Screen")
+                    guideStep(number: 2, text: "Tap Edit, then Add Widget")
+                    guideStep(number: 3, text: "Search \"JstMacros\"")
+                    guideStep(number: 4, text: "Add the medium widget")
                 }
-            }
-            .padding(.horizontal, 24)
+                .padding(.horizontal, 32)
 
-            Spacer()
+                Image("WidgetPreview")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .shadow(color: .white.opacity(0.05), radius: 12, y: 4)
+                    .padding(.horizontal, 40)
 
-            pillButton("I'm Ready") {
-                hasOnboarded = true
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
+                        tipPill(icon: "hand.tap.fill", text: "Tap +1, +5, +10\nto log grams")
+                        tipPill(icon: "circle.circle", text: "Tap the ring to\nswitch Protein / Carbs / Fat")
+                    }
+                    HStack(spacing: 12) {
+                        tipPill(icon: "arrow.uturn.backward", text: "Tap undo to\nremove last entry")
+                        tipPill(icon: "moon.stars.fill", text: "Totals reset\nat midnight")
+                    }
+                }
+                .padding(.horizontal, 24)
+
+                pillButton("I'm Ready") {
+                    hasOnboarded = true
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
     }
 

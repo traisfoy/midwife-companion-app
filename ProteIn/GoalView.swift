@@ -248,7 +248,7 @@ private struct HelpSheet: View {
 
                         VStack(spacing: 12) {
                             stepRow(number: 1, text: "Long press your Home Screen")
-                            stepRow(number: 2, text: "Tap Edit > Add Widget (or the + button)")
+                            stepRow(number: 2, text: "Tap Edit, then Add Widget")
                             stepRow(number: 3, text: "Search \"JstMacros\"")
                             stepRow(number: 4, text: "Add the medium widget")
                         }
