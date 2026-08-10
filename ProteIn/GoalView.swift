@@ -5,11 +5,14 @@ struct GoalView: View {
     @AppStorage("hasOnboarded", store: MacroStore.defaults)
     private var hasOnboarded = false
 
+    @ObservedObject private var store = StoreManager.shared
+
     @State private var proteinText = ""
     @State private var carbsText = ""
     @State private var fatText = ""
     @State private var showSavedConfirmation = false
     @State private var showHelp = false
+    @State private var showPaywall = false
     @FocusState private var focusedField: Macro?
 
     @State private var originalProtein = ""
@@ -23,15 +26,15 @@ struct GoalView: View {
     }
 
     private var allValid: Bool {
-        parsed(proteinText) != nil &&
-        parsed(carbsText) != nil &&
-        parsed(fatText) != nil
+        guard parsed(proteinText) != nil else { return false }
+        guard store.isUnlocked else { return true }
+        return parsed(carbsText) != nil && parsed(fatText) != nil
     }
 
     private var hasChanges: Bool {
-        proteinText != originalProtein ||
-        carbsText != originalCarbs ||
-        fatText != originalFat
+        if proteinText != originalProtein { return true }
+        guard store.isUnlocked else { return false }
+        return carbsText != originalCarbs || fatText != originalFat
     }
 
     var body: some View {
@@ -81,8 +84,13 @@ struct GoalView: View {
 
                     VStack(spacing: 16) {
                         macroRow(label: "Protein", text: $proteinText, macro: .protein)
-                        macroRow(label: "Carbs", text: $carbsText, macro: .carbs)
-                        macroRow(label: "Fat", text: $fatText, macro: .fat)
+                        if store.isUnlocked {
+                            macroRow(label: "Carbs", text: $carbsText, macro: .carbs)
+                            macroRow(label: "Fat", text: $fatText, macro: .fat)
+                        } else {
+                            lockedRow(label: "Carbs", macro: .carbs)
+                            lockedRow(label: "Fat", macro: .fat)
+                        }
                     }
                     .padding(.horizontal, 24)
 
@@ -109,9 +117,11 @@ struct GoalView: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.white.opacity(0.35))
                             .multilineTextAlignment(.center)
-                        Text("Tap the ring on the widget to switch macros.")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.35))
+                        if store.isUnlocked {
+                            Text("Tap the ring on the widget to switch macros.")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.35))
+                        }
                     }
                     .padding(.bottom, 24)
                 }
@@ -136,6 +146,43 @@ struct GoalView: View {
         .sheet(isPresented: $showHelp) {
             HelpSheet()
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+    }
+
+    private func lockedRow(label: String, macro: Macro) -> some View {
+        Button { showPaywall = true } label: {
+            HStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(macro.ringColor.opacity(0.45))
+                        .frame(width: 8, height: 8)
+                    Text(label)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.45))
+                }
+                .frame(width: 90, alignment: .leading)
+
+                Spacer()
+
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Unlock")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundStyle(.white.opacity(0.5))
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 20)
+            .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.white.opacity(0.06), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func macroRow(label: String, text: Binding<String>, macro: Macro) -> some View {
@@ -184,7 +231,7 @@ struct GoalView: View {
                 .foregroundStyle(.white.opacity(0.45))
 
             HStack(spacing: 20) {
-                ForEach(Macro.allCases, id: \.self) { macro in
+                ForEach(store.isUnlocked ? Macro.allCases : [.protein], id: \.self) { macro in
                     VStack(spacing: 2) {
                         Text("\(MacroStore.todayTotal(for: macro))g")
                             .font(.system(size: 15, weight: .bold))
@@ -200,12 +247,14 @@ struct GoalView: View {
     }
 
     private func save() {
-        guard let p = parsed(proteinText),
-              let c = parsed(carbsText),
-              let f = parsed(fatText) else { return }
+        guard let p = parsed(proteinText) else { return }
         MacroStore.setGoal(p, for: .protein)
-        MacroStore.setGoal(c, for: .carbs)
-        MacroStore.setGoal(f, for: .fat)
+        if store.isUnlocked {
+            guard let c = parsed(carbsText),
+                  let f = parsed(fatText) else { return }
+            MacroStore.setGoal(c, for: .carbs)
+            MacroStore.setGoal(f, for: .fat)
+        }
         hasOnboarded = true
         focusedField = nil
         WidgetCenter.shared.reloadAllTimelines()

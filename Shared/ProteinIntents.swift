@@ -41,6 +41,8 @@ struct SwitchMacroIntent: AppIntent {
     init() {}
 
     func perform() async throws -> some IntentResult {
+        // Carbs/fat tracking requires the one-time unlock; stay on protein until then.
+        guard MacroStore.fullMacrosUnlocked else { return .result() }
         MacroStore.selectedMacro = MacroStore.selectedMacro.next
         WidgetCenter.shared.reloadAllTimelines()
         return .result()

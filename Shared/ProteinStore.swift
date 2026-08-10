@@ -39,9 +39,19 @@ enum Macro: String, CaseIterable, Codable {
 enum MacroStore {
     static let appGroupID = "group.com.mactrak.tracker"
     static let selectedMacroKey = "selectedMacro"
+    static let fullMacrosUnlockedKey = "fullMacrosUnlocked"
 
     static var defaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? .standard
+    }
+
+    // MARK: - Full macros unlock (one-time purchase)
+
+    /// Written by StoreManager in the app; read by the widget so intents
+    /// can gate carbs/fat without doing StoreKit work in the extension.
+    static var fullMacrosUnlocked: Bool {
+        get { defaults.bool(forKey: fullMacrosUnlockedKey) }
+        set { defaults.set(newValue, forKey: fullMacrosUnlockedKey) }
     }
 
     static func dayStamp(for date: Date = Date()) -> String {
@@ -53,6 +63,7 @@ enum MacroStore {
 
     static var selectedMacro: Macro {
         get {
+            guard fullMacrosUnlocked else { return .protein }
             guard let raw = defaults.string(forKey: selectedMacroKey),
                   let macro = Macro(rawValue: raw) else { return .protein }
             return macro

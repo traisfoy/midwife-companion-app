@@ -20,6 +20,8 @@
 		AB0000000000000000000060 /* MacroColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000070 /* MacroColors.swift */; };
 		AB0000000000000000000061 /* MacroColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000070 /* MacroColors.swift */; };
 		AB0000000000000000000062 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000071 /* OnboardingFlow.swift */; };
+		AB0000000000000000000063 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000072 /* StoreManager.swift */; };
+		AB0000000000000000000064 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000073 /* PaywallView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +63,9 @@
 		AB0000000000000000000049 /* ProteinIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProteinIntents.swift; sourceTree = "<group>"; };
 		AB0000000000000000000070 /* MacroColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroColors.swift; sourceTree = "<group>"; };
 		AB0000000000000000000071 /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
+		AB0000000000000000000072 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		AB0000000000000000000073 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000074 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +111,9 @@
 				AB0000000000000000000040 /* ProteInApp.swift */,
 				AB0000000000000000000041 /* GoalView.swift */,
 				AB0000000000000000000071 /* OnboardingFlow.swift */,
+				AB0000000000000000000072 /* StoreManager.swift */,
+				AB0000000000000000000073 /* PaywallView.swift */,
+				AB0000000000000000000074 /* Products.storekit */,
 				AB0000000000000000000042 /* Assets.xcassets */,
 				AB0000000000000000000043 /* ProteIn.entitlements */,
 			);
@@ -238,6 +246,8 @@
 				AB0000000000000000000054 /* ProteinIntents.swift in Sources */,
 				AB0000000000000000000060 /* MacroColors.swift in Sources */,
 				AB0000000000000000000062 /* OnboardingFlow.swift in Sources */,
+				AB0000000000000000000063 /* StoreManager.swift in Sources */,
+				AB0000000000000000000064 /* PaywallView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
