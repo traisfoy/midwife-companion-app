@@ -2,7 +2,8 @@ import Foundation
 import StoreKit
 import WidgetKit
 
-@MainActor
+// Deliberately does not import SwiftUI: StoreKit.Transaction and
+// SwiftUI.Transaction would collide.
 final class StoreManager: ObservableObject {
     static let shared = StoreManager()
     static let fullMacrosProductID = "com.traisfoy.mactrak.fullmacros"
@@ -11,29 +12,26 @@ final class StoreManager: ObservableObject {
     @Published private(set) var isUnlocked = MacroStore.fullMacrosUnlocked
     @Published private(set) var isPurchasing = false
 
-    private var updatesTask: Task<Void, Never>?
-
     private init() {
-        updatesTask = Task { await self.observeTransactionUpdates() }
+        Task { await self.observeTransactionUpdates() }
         Task {
             await self.loadProduct()
             await self.refreshEntitlements()
         }
     }
 
-    deinit {
-        updatesTask?.cancel()
-    }
-
+    @MainActor
     var displayPrice: String {
         fullMacrosProduct?.displayPrice ?? "$2.99"
     }
 
+    @MainActor
     func loadProduct() async {
         guard fullMacrosProduct == nil else { return }
         fullMacrosProduct = try? await Product.products(for: [Self.fullMacrosProductID]).first
     }
 
+    @MainActor
     func purchase() async {
         if fullMacrosProduct == nil { await loadProduct() }
         guard let product = fullMacrosProduct, !isPurchasing else { return }
@@ -48,11 +46,13 @@ final class StoreManager: ObservableObject {
         }
     }
 
+    @MainActor
     func restorePurchases() async {
         try? await AppStore.sync()
         await refreshEntitlements()
     }
 
+    @MainActor
     private func refreshEntitlements() async {
         var unlocked = false
         for await result in Transaction.currentEntitlements {
@@ -70,12 +70,13 @@ final class StoreManager: ObservableObject {
             if case .verified(let transaction) = result {
                 await transaction.finish()
                 if transaction.productID == Self.fullMacrosProductID {
-                    setUnlocked(transaction.revocationDate == nil)
+                    await setUnlocked(transaction.revocationDate == nil)
                 }
             }
         }
     }
 
+    @MainActor
     private func setUnlocked(_ unlocked: Bool) {
         isUnlocked = unlocked
         if MacroStore.fullMacrosUnlocked != unlocked {
